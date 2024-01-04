@@ -8,6 +8,7 @@ extern crate skim;
 use clap::{Args, Parser, Subcommand};
 use regex::Regex;
 use skim::prelude::*;
+use crate::VolOp::{Dec, Inc};
 
 #[derive(Debug, Parser)]
 #[command(name = "vnz")]
@@ -60,7 +61,10 @@ struct Status {
     sinks: Vec<Sink>,
 }
 
+const DEFAULT_SINK_SPECIFIER: &str = "@DEFAULT_AUDIO_SINK@";
 const SINK_REGEX: &str = r"(?P<default>\*)?\s+(?P<id>[0-9]+)\. (?P<name>[a-zA-Z0-9() -]+) \[vol: (?P<volume>[0-9.]+)\]";
+
+const VOLUME_MODIFY_STEP: f32 = 0.05;
 const WPCTL_EXEC: &str = "wpctl";
 
 fn get_status() -> Status {
@@ -143,13 +147,30 @@ fn set_default_sink() {
     cmd.arg("set-default").arg(sink_id_str).spawn().expect("error setting default sink");
 }
 
+enum VolOp {
+    Dec,
+    Inc,
+}
+
+fn modify_volume(op: VolOp) {
+    let mut cmd = Command::new(WPCTL_EXEC);
+
+    let sign = match op {
+        VolOp::Dec => {"-"}
+        VolOp::Inc => {"+"}
+    };
+    cmd.args(["set-volume", "-l", "1.5", DEFAULT_SINK_SPECIFIER, format!("{VOLUME_MODIFY_STEP}{sign}").as_str()]);
+    cmd.spawn().expect("error setting volume");
+}
+
+
 fn main() {
     let args = Cli::parse();
     match args.command {
         Commands::Vol(op) => {
             match op.op {
-                Op::Dec => { println!("dec") }
-                Op::Inc => { println!("inc") }
+                Op::Dec => { modify_volume(Dec)}
+                Op::Inc => { modify_volume(Inc)}
                 Op::Toggle => { println!("tog") }
             }
         }
