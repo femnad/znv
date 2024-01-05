@@ -142,7 +142,7 @@ pub fn set_default() {
         return;
     }
 
-    let maybe_sink_id = if !atty::is(atty::Stream::Stdout) {
+    let maybe_sink_id = if atty::is(atty::Stream::Stdout) {
         select_with_skim(sink_names)
     } else {
         select_with_rofi(sink_names)
