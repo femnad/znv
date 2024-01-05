@@ -11,7 +11,7 @@ use regex::Regex;
 use skim::prelude::*;
 
 #[derive(Debug, Parser)]
-#[command(name = "vnz")]
+#[command(name = "znv")]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
@@ -64,7 +64,7 @@ const DEFAULT_SINK_SPECIFIER: &str = "@DEFAULT_AUDIO_SINK@";
 const SINK_REGEX: &str =
     r"(?P<default>\*)?\s+(?P<id>[0-9]+)\. (?P<name>[a-zA-Z0-9() -]+) \[vol: (?P<volume>[0-9.]+)\]";
 
-const VOLUME_MODIFY_STEP: f32 = 0.05;
+const VOLUME_MODIFY_STEP: f32 = 0.01;
 const WPCTL_EXEC: &str = "wpctl";
 const MUTED_SUFFIX: &str = "[MUTED]";
 
