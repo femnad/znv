@@ -121,7 +121,7 @@ fn select_with_skim(sink_names: Vec<String>) -> Option<String> {
     Some(selection)
 }
 
-pub fn set_default() {
+pub fn set_default(prefer_rofi: bool) {
     let status = get_status();
 
     let mut name_id_map: HashMap<String, u32> = HashMap::new();
@@ -142,7 +142,7 @@ pub fn set_default() {
         return;
     }
 
-    let maybe_sink_id = if atty::is(atty::Stream::Stdout) {
+    let maybe_sink_id = if !prefer_rofi && atty::is(atty::Stream::Stdout) {
         select_with_skim(sink_names)
     } else {
         select_with_rofi(sink_names)
@@ -155,7 +155,6 @@ pub fn set_default() {
     let sink_id = name_id_map
         .get(&maybe_sink_id.unwrap())
         .expect("unable to find sink ID");
-    println!("`{sink_id}`");
 
     let mut cmd = Command::new(WPCTL_EXEC);
     cmd.arg("set-default")

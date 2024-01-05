@@ -35,7 +35,13 @@ struct DefaultArgs {
 #[derive(Debug, Subcommand)]
 enum Node {
     #[command(about = "Set default sink")]
-    Sink,
+    Sink(SinkArgs)
+}
+
+#[derive(Args, Debug)]
+struct SinkArgs {
+    #[arg(short = 'r', long)]
+    select_with_rofi: bool,
 }
 
 #[derive(Debug, Subcommand)]
@@ -66,7 +72,7 @@ fn main() {
             notify::volume(volume);
         }
         Commands::Default(node) => match node.node {
-            Node::Sink => wpctl::sink::set_default(),
+            Node::Sink(sink) => wpctl::sink::set_default(sink.select_with_rofi),
         },
     }
 }
