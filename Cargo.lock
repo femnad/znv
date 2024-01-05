@@ -912,15 +912,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "711b9620af191e0cdc7468a8d14e709c3dcdb115b36f838e601583af800a370a"
 
 [[package]]
-name = "znv"
-version = "0.1.0"
-dependencies = [
- "clap 4.4.12",
- "regex",
- "skim",
-]
-
-[[package]]
 name = "vte"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1163,3 +1154,12 @@ name = "windows_x86_64_msvc"
 version = "0.52.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dff9641d1cd4be8d1a070daf9e3773c5f67e78b4d9d42263020c057706765c04"
+
+[[package]]
+name = "znv"
+version = "0.1.0"
+dependencies = [
+ "clap 4.4.12",
+ "regex",
+ "skim",
+]
