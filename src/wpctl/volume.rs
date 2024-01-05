@@ -1,5 +1,5 @@
-use std::process::Command;
 use crate::wpctl::WPCTL_EXEC;
+use std::process::Command;
 
 const DEFAULT_MODIFY_STEP: u32 = 5;
 const DEFAULT_SINK_SPECIFIER: &str = "@DEFAULT_AUDIO_SINK@";
@@ -47,11 +47,7 @@ pub fn modify(step: Option<u32>, sign: &str) -> f32 {
 pub fn toggle() -> f32 {
     let mut cmd = Command::new(WPCTL_EXEC);
 
-    cmd.args([
-        "set-mute",
-        DEFAULT_SINK_SPECIFIER,
-        "toggle"
-    ]);
+    cmd.args(["set-mute", DEFAULT_SINK_SPECIFIER, "toggle"]);
     cmd.status().expect("error toggling volume");
 
     get_volume()

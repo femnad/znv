@@ -1,5 +1,5 @@
-mod wpctl;
 mod notify;
+mod wpctl;
 
 extern crate skim;
 
@@ -57,7 +57,7 @@ fn main() {
                     let sign = match op.op {
                         Op::Dec { .. } => "-",
                         Op::Inc { .. } => "+",
-                        _ => unreachable!("No other Op variant should be matched here")
+                        _ => unreachable!("No other Op variant should be matched here"),
                     };
                     wpctl::volume::modify(step, sign)
                 }

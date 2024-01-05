@@ -1,9 +1,9 @@
-use std::collections::HashMap;
-use std::io::Cursor;
-use std::process::Command;
 use regex::Regex;
 use skim::prelude::{SkimItemReader, SkimOptionsBuilder};
 use skim::Skim;
+use std::collections::HashMap;
+use std::io::Cursor;
+use std::process::Command;
 
 use crate::wpctl::WPCTL_EXEC;
 

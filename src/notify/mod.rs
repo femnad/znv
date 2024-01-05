@@ -1,4 +1,4 @@
-use::notify_rust::{Hint,Notification,Urgency};
+use ::notify_rust::{Hint, Notification, Urgency};
 
 fn get_volume_classifier(volume: f32) -> String {
     let vol = if volume == 0.0 {
@@ -34,7 +34,9 @@ pub fn volume(volume: f32) {
     }
     let boosted = if boosting {
         format!(" [{boost_level}x boost]").to_string()
-    } else { String::new() };
+    } else {
+        String::new()
+    };
 
     let icon = get_icon(volume);
     let vol_int = (normalized_volume * 100.0) as u32;
@@ -45,5 +47,6 @@ pub fn volume(volume: f32) {
         .hint(Hint::CustomInt("value".to_string(), vol_int as i32))
         .icon(icon.as_str())
         .summary(summary.as_str())
-        .show().expect("error sending notification");
+        .show()
+        .expect("error sending notification");
 }
