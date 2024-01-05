@@ -2158,6 +2158,7 @@ dependencies = [
 name = "znv"
 version = "0.1.0"
 dependencies = [
+ "atty",
  "clap 4.4.12",
  "notify-rust",
  "regex",

@@ -2,8 +2,8 @@ use regex::Regex;
 use skim::prelude::{SkimItemReader, SkimOptionsBuilder};
 use skim::Skim;
 use std::collections::HashMap;
-use std::io::Cursor;
-use std::process::Command;
+use std::io::{Cursor, Write};
+use std::process::{Command, Stdio};
 
 use crate::wpctl::WPCTL_EXEC;
 
@@ -72,16 +72,57 @@ fn get_status() -> Status {
     Status { sinks }
 }
 
-pub fn set_default() {
-    let status = get_status();
+fn select_with_rofi(sink_names: Vec<String>) -> Option<String> {
+    let rofi = Command::new("rofi")
+        .args(["-p", "Set default sink", "-dmenu"])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .spawn()
+        .expect("error running rofi");
 
+    let input = sink_names.join("\n");
+    rofi.stdin
+        .as_ref()
+        .expect("error getting stdin of rofi")
+        .write_all(input.as_ref())
+        .expect("error writing to stdin of rofi");
+
+    let output = rofi
+        .wait_with_output()
+        .expect("error waiting for rofi to complete");
+    if !output.status.success() {
+        return None;
+    }
+
+    Some(String::from_utf8_lossy(&output.stdout).trim().to_string())
+}
+
+fn select_with_skim(sink_names: Vec<String>) -> Option<String> {
     let options = SkimOptionsBuilder::default()
         .height(Some("50%"))
         .multi(false)
         .build()
         .unwrap();
-
     let item_reader = SkimItemReader::default();
+
+    let items = item_reader.of_bufread(Cursor::new(sink_names.join("\n")));
+
+    let skim_out = Skim::run_with(&options, Some(items)).expect("error selecting with skim");
+    if skim_out.is_abort {
+        return None;
+    }
+
+    let selection = skim_out
+        .selected_items
+        .get(0)
+        .expect("Skim not aborted but there's no selection")
+        .output()
+        .to_string();
+    Some(selection)
+}
+
+pub fn set_default() {
+    let status = get_status();
 
     let mut name_id_map: HashMap<String, u32> = HashMap::new();
     let mut sink_names: Vec<String> = Vec::new();
@@ -101,22 +142,24 @@ pub fn set_default() {
         return;
     }
 
-    let items = item_reader.of_bufread(Cursor::new(sink_names.join("\n")));
+    let maybe_sink_id = if !atty::is(atty::Stream::Stdout) {
+        select_with_skim(sink_names)
+    } else {
+        select_with_rofi(sink_names)
+    };
 
-    let selected_items = Skim::run_with(&options, Some(items))
-        .map(|out| out.selected_items)
-        .unwrap_or_else(|| Vec::new());
+    if maybe_sink_id.is_none() {
+        return;
+    }
 
-    let sel_id = selected_items
-        .get(0)
-        .expect("no selection")
-        .output()
-        .to_string();
-    let sink_id = name_id_map.get(&sel_id).expect("unable to find sink ID");
-    let sink_id_str = sink_id.to_string();
+    let sink_id = name_id_map
+        .get(&maybe_sink_id.unwrap())
+        .expect("unable to find sink ID");
+    println!("`{sink_id}`");
+
     let mut cmd = Command::new(WPCTL_EXEC);
     cmd.arg("set-default")
-        .arg(sink_id_str)
+        .arg(sink_id.to_string())
         .status()
         .expect("error setting default sink");
 }
