@@ -1,3 +1,4 @@
+use notify_rust::Notification;
 use regex::Regex;
 use skim::prelude::{SkimItemReader, SkimOptionsBuilder};
 use skim::Skim;
@@ -5,12 +6,29 @@ use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use std::io::{Cursor, Write};
 use std::process::{Command, Stdio};
-use notify_rust::Notification;
+use std::str::FromStr;
 
 use crate::wpctl::WPCTL_EXEC;
 
 const NODE_REGEX: &str =
     r"(?P<default>\*)?\s+(?P<id>[0-9]+)\. (?P<name>[a-zA-Z0-9() -]+) \[vol: (?P<volume>[0-9.]+)\]";
+
+enum NodeType {
+    Sink,
+    Source,
+}
+
+impl FromStr for NodeType {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "sink" => Ok(NodeType::Sink),
+            "source" => Ok(NodeType::Source),
+            _ => Err(()),
+        }
+    }
+}
 
 #[derive(Debug)]
 struct Node {
@@ -22,7 +40,11 @@ struct Node {
 
 impl Display for Node {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "ID: {}, name: {}, volume: {}, default: {}", self.id, self.name, self.volume, self.default)
+        write!(
+            f,
+            "ID: {}, name: {}, volume: {}, default: {}",
+            self.id, self.name, self.volume, self.default
+        )
     }
 }
 
@@ -174,44 +196,79 @@ fn inform(msg: &str, prefer_gui: bool) {
         .expect("error showing informational message");
 }
 
-pub fn set_default(prefer_gui: bool) {
-    let status = get_status();
-
+fn set_default_node(nodes: Vec<Node>, node_type: &str, prefer_gui: bool) {
     let mut name_id_map: HashMap<String, u32> = HashMap::new();
-    let mut sink_names: Vec<String> = Vec::new();
+    let mut node_names: Vec<String> = Vec::new();
 
-    let mut default_sink = String::new();
-    for sink in status.sinks {
-        if sink.default {
-            default_sink = sink.name;
+    let mut default_node_name = String::new();
+    for node in &nodes {
+        if node.default {
+            default_node_name = node.name.clone();
             continue;
         }
-        name_id_map.insert(sink.name.clone(), sink.id);
-        sink_names.push(sink.name.clone());
+        name_id_map.insert(node.name.clone(), node.id);
+        node_names.push(node.name.clone());
     }
 
-    if sink_names.len() == 0 {
-        inform(format!("There's only one sink: {default_sink}").as_str(), prefer_gui);
+    if nodes.len() == 1 {
+        let sole_node = nodes.get(0).expect("unable to get the only node");
+        inform(
+            format!("There's only one {node_type}: {}", sole_node.name).as_str(),
+            prefer_gui,
+        );
         return;
     }
 
-    let maybe_sink_id = if !prefer_gui && atty::is(atty::Stream::Stdout) {
-        select_with_skim(sink_names)
+    if node_names.len() == 0 {
+        inform(
+            format!("There's only one non-default {node_type}: {default_node_name}").as_str(),
+            prefer_gui,
+        );
+        return;
+    }
+
+    let maybe_node_id = if !prefer_gui && atty::is(atty::Stream::Stdout) {
+        select_with_skim(node_names)
     } else {
-        select_with_rofi(sink_names)
+        select_with_rofi(node_names)
     };
 
-    if maybe_sink_id.is_none() {
+    if maybe_node_id.is_none() {
         return;
     }
 
-    let sink_id = name_id_map
-        .get(&maybe_sink_id.unwrap())
-        .expect("unable to find sink ID");
+    let node_id = name_id_map
+        .get(&maybe_node_id.unwrap())
+        .expect(format!("unable to find {node_type} ID").as_str());
 
     let mut cmd = Command::new(WPCTL_EXEC);
     cmd.arg("set-default")
-        .arg(sink_id.to_string())
+        .arg(node_id.to_string())
         .status()
-        .expect("error setting default sink");
+        .expect(format!("error setting default %s {node_type}").as_str());
+}
+
+pub fn reset_default() {
+    let mut cmd = Command::new(WPCTL_EXEC);
+    cmd.arg("clear-default")
+        .status()
+        .expect("error clearing default configured nodes");
+}
+
+pub fn set_default(node_type: &str, prefer_gui: bool) {
+    let status = get_status();
+
+    let parsed_type: Result<NodeType, ()> = node_type.parse();
+    let parsed_type = match parsed_type {
+        Ok(nt) => Some(nt),
+        Err(_) => None,
+    }
+    .expect("error determining node type");
+
+    let nodes = match parsed_type {
+        NodeType::Sink => status.sinks,
+        NodeType::Source => status.sources,
+    };
+
+    set_default_node(nodes, node_type, prefer_gui);
 }

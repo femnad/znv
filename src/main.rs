@@ -6,7 +6,7 @@ extern crate skim;
 use clap::{Args, Parser, Subcommand};
 
 #[derive(Debug, Parser)]
-#[command(name = "znv", version, about = "Tiny wpctl wrapper")]
+#[command(name = "znv", version, about = "znv: Tiny wpctl wrapper")]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
@@ -15,6 +15,7 @@ struct Cli {
 #[derive(Debug, Subcommand)]
 enum Commands {
     Default(DefaultArgs),
+    #[command(about = "Show sinks and sources")]
     Status,
     Vol(VolArgs),
 }
@@ -35,14 +36,21 @@ struct DefaultArgs {
 
 #[derive(Debug, Subcommand)]
 enum Node {
+    #[command(about = "Reset defaults")]
+    Reset,
     #[command(about = "Set default sink")]
-    Sink(SinkArgs)
+    Sink(SetterArgs),
+    #[command(about = "Set default source")]
+    Source(SetterArgs),
 }
 
 #[derive(Args, Debug)]
-struct SinkArgs {
-    #[arg(short = 'g', long,
-    help = "Prefer using GUI facilities for selection and messages, like rofi and desktop notifications")]
+struct SetterArgs {
+    #[arg(
+        short = 'g',
+        long,
+        help = "Prefer using GUI facilities for selection and messages, like rofi and desktop notifications"
+    )]
     prefer_gui: bool,
 }
 
@@ -60,12 +68,14 @@ fn main() {
     let args = Cli::parse();
     match args.command {
         Commands::Default(node) => match node.node {
-            Node::Sink(sink) => wpctl::sink::set_default(sink.prefer_gui),
+            Node::Reset => wpctl::sink::reset_default(),
+            Node::Sink(sink) => wpctl::sink::set_default("sink", sink.prefer_gui),
+            Node::Source(source) => wpctl::sink::set_default("source", source.prefer_gui),
         },
         Commands::Status => {
             let status = wpctl::sink::get_status();
             println!("{status}");
-        },
+        }
         Commands::Vol(op) => {
             let volume = match op.op {
                 Op::Dec { step } | Op::Inc { step } => {
