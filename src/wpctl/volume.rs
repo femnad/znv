@@ -1,11 +1,11 @@
 use std::process::Command;
 use crate::wpctl::WPCTL_EXEC;
 
+const DEFAULT_MODIFY_STEP: u32 = 5;
 const DEFAULT_SINK_SPECIFIER: &str = "@DEFAULT_AUDIO_SINK@";
 const MAXIMUM_VOLUME: f32 = 1.5;
 const MINIMUM_MODIFY_STEP: f32 = 0.01;
 const MUTED_SUFFIX: &str = "[MUTED]";
-const VOLUME_MODIFY_STEP: u32 = 5;
 
 fn get_volume() -> f32 {
     let mut cmd = Command::new(WPCTL_EXEC);
@@ -28,7 +28,7 @@ fn get_volume() -> f32 {
 pub fn modify(step: Option<u32>, sign: &str) -> f32 {
     let mut cmd = Command::new(WPCTL_EXEC);
 
-    let modify_step = step.unwrap_or(VOLUME_MODIFY_STEP);
+    let modify_step = step.unwrap_or(DEFAULT_MODIFY_STEP);
     let modify_step_str = f32::max(modify_step as f32 / 100.0, MINIMUM_MODIFY_STEP).to_string();
     let max_vol = MAXIMUM_VOLUME.to_string();
 
