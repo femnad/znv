@@ -41,9 +41,9 @@ enum Node {
 #[derive(Debug, Subcommand)]
 enum Op {
     #[command(about = "Decrease volume")]
-    Dec,
+    Dec { step: Option<u32> },
     #[command(about = "Increase volume")]
-    Inc,
+    Inc { step: Option<u32> },
     #[command(about = "Toggle mute state")]
     Toggle,
 }
@@ -53,13 +53,13 @@ fn main() {
     match args.command {
         Commands::Vol(op) => {
             let volume = match op.op {
-                Op::Dec | Op::Inc => {
+                Op::Dec { step } | Op::Inc { step } => {
                     let sign = match op.op {
-                        Op::Dec => "-",
-                        Op::Inc => "+",
+                        Op::Dec { .. } => "-",
+                        Op::Inc { .. } => "+",
                         _ => unreachable!("No other Op variant should be matched here")
                     };
-                    wpctl::volume::modify(sign)
+                    wpctl::volume::modify(step, sign)
                 }
                 Op::Toggle => wpctl::volume::toggle(),
             };
