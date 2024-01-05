@@ -4,6 +4,7 @@ use skim::Skim;
 use std::collections::HashMap;
 use std::io::{Cursor, Write};
 use std::process::{Command, Stdio};
+use notify_rust::Notification;
 
 use crate::wpctl::WPCTL_EXEC;
 
@@ -121,7 +122,20 @@ fn select_with_skim(sink_names: Vec<String>) -> Option<String> {
     Some(selection)
 }
 
-pub fn set_default(prefer_rofi: bool) {
+fn inform(msg: &str, prefer_gui: bool) {
+    if !prefer_gui && atty::is(atty::Stream::Stdout) {
+        println!("{}", msg);
+        return;
+    }
+
+    Notification::new()
+        .summary("znv")
+        .body(msg)
+        .show()
+        .expect("error showing informational message");
+}
+
+pub fn set_default(prefer_gui: bool) {
     let status = get_status();
 
     let mut name_id_map: HashMap<String, u32> = HashMap::new();
@@ -138,11 +152,11 @@ pub fn set_default(prefer_rofi: bool) {
     }
 
     if sink_names.len() == 0 {
-        println!("There's only one sink: {default_sink}");
+        inform(format!("There's only one sink: {default_sink}").as_str(), prefer_gui);
         return;
     }
 
-    let maybe_sink_id = if !prefer_rofi && atty::is(atty::Stream::Stdout) {
+    let maybe_sink_id = if !prefer_gui && atty::is(atty::Stream::Stdout) {
         select_with_skim(sink_names)
     } else {
         select_with_rofi(sink_names)

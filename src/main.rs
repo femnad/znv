@@ -40,8 +40,9 @@ enum Node {
 
 #[derive(Args, Debug)]
 struct SinkArgs {
-    #[arg(short = 'r', long)]
-    select_with_rofi: bool,
+    #[arg(short = 'g', long,
+    help = "Prefer using GUI facilities for selection and messages, like rofi and desktop notifications")]
+    prefer_gui: bool,
 }
 
 #[derive(Debug, Subcommand)]
@@ -72,7 +73,7 @@ fn main() {
             notify::volume(volume);
         }
         Commands::Default(node) => match node.node {
-            Node::Sink(sink) => wpctl::sink::set_default(sink.select_with_rofi),
+            Node::Sink(sink) => wpctl::sink::set_default(sink.prefer_gui),
         },
     }
 }
