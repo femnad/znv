@@ -2,38 +2,67 @@ use regex::Regex;
 use skim::prelude::{SkimItemReader, SkimOptionsBuilder};
 use skim::Skim;
 use std::collections::HashMap;
+use std::fmt::{Display, Formatter};
 use std::io::{Cursor, Write};
 use std::process::{Command, Stdio};
 use notify_rust::Notification;
 
 use crate::wpctl::WPCTL_EXEC;
 
-const SINK_REGEX: &str =
+const NODE_REGEX: &str =
     r"(?P<default>\*)?\s+(?P<id>[0-9]+)\. (?P<name>[a-zA-Z0-9() -]+) \[vol: (?P<volume>[0-9.]+)\]";
 
 #[derive(Debug)]
-struct Sink {
+struct Node {
     id: u32,
     default: bool,
     name: String,
-    _volume: f32,
+    volume: f32,
+}
+
+impl Display for Node {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "ID: {}, name: {}, volume: {}, default: {}", self.id, self.name, self.volume, self.default)
+    }
 }
 
 #[derive(Debug)]
-struct Status {
-    sinks: Vec<Sink>,
+pub struct Status {
+    sinks: Vec<Node>,
+    sources: Vec<Node>,
 }
 
-fn get_status() -> Status {
+impl Status {
+    fn maybe_print_nodes(nodes: &Vec<Node>, header: &str, f: &mut Formatter<'_>) {
+        if nodes.len() > 0 {
+            write!(f, "{}", header).unwrap();
+        }
+        for node in nodes {
+            write!(f, "{}", node).unwrap();
+        }
+    }
+}
+
+impl Display for Status {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        Status::maybe_print_nodes(&self.sinks, "Sinks:\n", f);
+        Status::maybe_print_nodes(&self.sources, "\nSources:\n", f);
+        Ok(())
+    }
+}
+
+pub fn get_status() -> Status {
     let out = Command::new(WPCTL_EXEC)
         .arg("status")
         .output()
         .expect("error running wpctl");
     let mut parsing_audio = false;
     let mut parsing_sinks = false;
+    let mut parsing_sources = false;
 
-    let sink_regex = Regex::new(SINK_REGEX).expect("error parsing sink regex");
-    let mut sinks: Vec<Sink> = vec![];
+    let node_regex = Regex::new(NODE_REGEX).expect("error parsing sink regex");
+    let mut sinks: Vec<Node> = vec![];
+    let mut sources: Vec<Node> = vec![];
 
     let output = String::from_utf8(out.stdout).expect("error getting command output");
     for line in output.lines() {
@@ -45,9 +74,19 @@ fn get_status() -> Status {
             parsing_sinks = true;
             continue;
         }
+        if parsing_audio && line.ends_with::<&str>("Sources:".as_ref()) {
+            parsing_sources = true;
+            continue;
+        }
 
-        if parsing_sinks {
-            if let Some(captures) = sink_regex.captures(line) {
+        if parsing_sinks || parsing_sources {
+            let nodes = if parsing_sinks {
+                &mut sinks
+            } else {
+                &mut sources
+            };
+
+            if let Some(captures) = node_regex.captures(line) {
                 let default = &captures.name("default").is_some();
                 let id = &captures.name("id").expect("error getting ID").as_str();
                 let id_u: u32 = id.parse().expect("error parsing ID");
@@ -57,20 +96,20 @@ fn get_status() -> Status {
                     .expect("error getting volume")
                     .as_str();
                 let volume_f: f32 = volume.parse().expect("error parsing volume");
-                let sink = Sink {
+                let node = Node {
                     default: *default,
                     id: id_u,
                     name: name.trim().to_string(),
-                    _volume: volume_f,
+                    volume: volume_f,
                 };
-                sinks.push(sink);
+                nodes.push(node);
             } else {
                 parsing_sinks = false;
             }
         }
     }
 
-    Status { sinks }
+    Status { sinks, sources }
 }
 
 fn select_with_rofi(sink_names: Vec<String>) -> Option<String> {

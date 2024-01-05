@@ -14,8 +14,9 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Commands {
-    Vol(VolArgs),
     Default(DefaultArgs),
+    Status,
+    Vol(VolArgs),
 }
 
 #[derive(Args, Debug)]
@@ -58,6 +59,13 @@ enum Op {
 fn main() {
     let args = Cli::parse();
     match args.command {
+        Commands::Default(node) => match node.node {
+            Node::Sink(sink) => wpctl::sink::set_default(sink.prefer_gui),
+        },
+        Commands::Status => {
+            let status = wpctl::sink::get_status();
+            println!("{status}");
+        },
         Commands::Vol(op) => {
             let volume = match op.op {
                 Op::Dec { step } | Op::Inc { step } => {
@@ -72,8 +80,5 @@ fn main() {
             };
             notify::volume(volume);
         }
-        Commands::Default(node) => match node.node {
-            Node::Sink(sink) => wpctl::sink::set_default(sink.prefer_gui),
-        },
     }
 }
