@@ -3,10 +3,11 @@ use regex::Regex;
 use skim::prelude::{SkimItemReader, SkimOptionsBuilder};
 use skim::Skim;
 use std::collections::HashMap;
-use std::fmt::{Display, Formatter};
 use std::io::{Cursor, Write};
 use std::process::{Command, Stdio};
 use std::str::FromStr;
+use tabled::settings::Style;
+use tabled::{Table, Tabled};
 
 use crate::wpctl::WPCTL_EXEC;
 
@@ -29,50 +30,24 @@ impl FromStr for NodeType {
     }
 }
 
-#[derive(Debug)]
+#[derive(Tabled)]
 struct Node {
+    #[tabled(order = 0, rename = "ID")]
     id: u32,
+    #[tabled(order = 3, rename = "Default")]
     default: bool,
+    #[tabled(order = 1, rename = "Name")]
     name: String,
+    #[tabled(order = 2, rename = "Volume")]
     volume: f32,
 }
 
-impl Display for Node {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "ID: {}, name: {}, volume: {}, default: {}\n",
-            self.id, self.name, self.volume, self.default
-        )
-    }
-}
-
-#[derive(Debug)]
 pub struct Status {
     sinks: Vec<Node>,
     sources: Vec<Node>,
 }
 
-impl Status {
-    fn maybe_print_nodes(nodes: &Vec<Node>, header: &str, f: &mut Formatter<'_>) {
-        if nodes.len() > 0 {
-            write!(f, "{}", header).unwrap();
-        }
-        for node in nodes {
-            write!(f, "{}", node).unwrap();
-        }
-    }
-}
-
-impl Display for Status {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        Status::maybe_print_nodes(&self.sinks, "Sinks:\n", f);
-        Status::maybe_print_nodes(&self.sources, "Sources:\n", f);
-        Ok(())
-    }
-}
-
-pub fn get_status() -> Status {
+fn get_status() -> Status {
     let out = Command::new(WPCTL_EXEC)
         .arg("status")
         .output()
@@ -131,6 +106,26 @@ pub fn get_status() -> Status {
     }
 
     Status { sinks, sources }
+}
+
+fn print_nodes(nodes: &Vec<Node>, header: &str) {
+    if nodes.len() == 0 {
+        return;
+    }
+
+    let mut table = Table::new(nodes);
+    table.with(Style::blank());
+    println!("{header}:");
+    println!("{table}");
+}
+
+pub fn print_status() {
+    let status = get_status();
+    print_nodes(&status.sinks, "Sinks");
+    if status.sinks.len() > 0 && status.sinks.len() > 0 {
+        println!()
+    }
+    print_nodes(&status.sources, "Sources");
 }
 
 fn select_with_rofi(node_names: Vec<String>, prompt: &str) -> Option<String> {

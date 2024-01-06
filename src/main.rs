@@ -91,8 +91,7 @@ fn main() {
             print_completions(generate_args.shell, &mut cmd);
         }
         Commands::Status => {
-            let status = wpctl::node::get_status();
-            println!("{status}");
+            wpctl::node::print_status();
         }
         Commands::Volume(op) => {
             let volume = match op.op {
