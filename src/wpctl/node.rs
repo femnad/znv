@@ -11,7 +11,7 @@ use tabled::{Table, Tabled};
 
 use crate::wpctl::WPCTL_EXEC;
 
-const NODE_REGEX: &str = r"(?P<default>\*)?\s+(?P<id>[0-9]+)\. (?P<name>[a-zA-Z0-9()+/ -]+) \[vol: (?P<volume>[0-9.]+)\]";
+const NODE_REGEX: &str = r"(?P<default>\*)?\s+(?P<id>[0-9]+)\. (?P<name>[^\[\]]+) \[vol: (?P<volume>[0-9.]+)\]";
 
 enum NodeType {
     Sink,
