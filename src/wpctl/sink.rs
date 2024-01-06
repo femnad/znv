@@ -82,7 +82,7 @@ pub fn get_status() -> Status {
     let mut parsing_sinks = false;
     let mut parsing_sources = false;
 
-    let node_regex = Regex::new(NODE_REGEX).expect("error parsing sink regex");
+    let node_regex = Regex::new(NODE_REGEX).expect("error parsing node regex");
     let mut sinks: Vec<Node> = vec![];
     let mut sources: Vec<Node> = vec![];
 
@@ -134,15 +134,15 @@ pub fn get_status() -> Status {
     Status { sinks, sources }
 }
 
-fn select_with_rofi(sink_names: Vec<String>) -> Option<String> {
+fn select_with_rofi(node_names: Vec<String>, prompt: &str) -> Option<String> {
     let rofi = Command::new("rofi")
-        .args(["-p", "Set default sink", "-dmenu"])
+        .args(["-p", prompt, "-dmenu"])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .spawn()
         .expect("error running rofi");
 
-    let input = sink_names.join("\n");
+    let input = node_names.join("\n");
     rofi.stdin
         .as_ref()
         .expect("error getting stdin of rofi")
@@ -159,15 +159,16 @@ fn select_with_rofi(sink_names: Vec<String>) -> Option<String> {
     Some(String::from_utf8_lossy(&output.stdout).trim().to_string())
 }
 
-fn select_with_skim(sink_names: Vec<String>) -> Option<String> {
+fn select_with_skim(node_names: Vec<String>, prompt: &str) -> Option<String> {
     let options = SkimOptionsBuilder::default()
-        .height(Some("50%"))
+        .height(Some("100%"))
         .multi(false)
+        .prompt(Some(prompt))
         .build()
         .unwrap();
     let item_reader = SkimItemReader::default();
 
-    let items = item_reader.of_bufread(Cursor::new(sink_names.join("\n")));
+    let items = item_reader.of_bufread(Cursor::new(node_names.join("\n")));
 
     let skim_out = Skim::run_with(&options, Some(items)).expect("error selecting with skim");
     if skim_out.is_abort {
@@ -227,10 +228,11 @@ fn set_default_node(nodes: Vec<Node>, node_type: &str, prefer_gui: bool) {
         return;
     }
 
+    let prompt = format!("Set default {node_type}");
     let maybe_node_id = if !prefer_gui && atty::is(atty::Stream::Stdout) {
-        select_with_skim(node_names)
+        select_with_skim(node_names, prompt.as_str())
     } else {
-        select_with_rofi(node_names)
+        select_with_rofi(node_names, prompt.as_str())
     };
 
     if maybe_node_id.is_none() {
