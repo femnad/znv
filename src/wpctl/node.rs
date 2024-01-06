@@ -41,7 +41,7 @@ impl Display for Node {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "ID: {}, name: {}, volume: {}, default: {}",
+            "ID: {}, name: {}, volume: {}, default: {}\n",
             self.id, self.name, self.volume, self.default
         )
     }
