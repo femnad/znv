@@ -7,7 +7,7 @@ const MAXIMUM_VOLUME: f32 = 1.5;
 const MINIMUM_MODIFY_STEP: f32 = 0.01;
 const MUTED_SUFFIX: &str = "[MUTED]";
 
-fn get_volume() -> f32 {
+pub fn lookup() -> f32 {
     let mut cmd = Command::new(WPCTL_EXEC);
     cmd.args(["get-volume", DEFAULT_SINK_SPECIFIER]);
     let out = cmd.output().expect("error getting volume");
@@ -25,7 +25,7 @@ fn get_volume() -> f32 {
     vol_f
 }
 
-pub fn modify(step: Option<u32>, sign: &str) -> f32 {
+pub fn modify(step: Option<u32>, sign: &str) {
     let mut cmd = Command::new(WPCTL_EXEC);
 
     let modify_step = step.unwrap_or(DEFAULT_MODIFY_STEP);
@@ -40,15 +40,11 @@ pub fn modify(step: Option<u32>, sign: &str) -> f32 {
         format!("{modify_step_str}{sign}").as_str(),
     ]);
     cmd.status().expect("error setting volume");
-
-    get_volume()
 }
 
-pub fn toggle() -> f32 {
+pub fn toggle() {
     let mut cmd = Command::new(WPCTL_EXEC);
 
     cmd.args(["set-mute", DEFAULT_SINK_SPECIFIER, "toggle"]);
     cmd.status().expect("error toggling volume");
-
-    get_volume()
 }

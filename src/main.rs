@@ -94,7 +94,8 @@ fn main() {
             wpctl::node::print_status();
         }
         Commands::Volume(op) => {
-            let volume = match op.op {
+            let old_volume = wpctl::volume::lookup();
+            match op.op {
                 Op::Dec { step } | Op::Inc { step } => {
                     let sign = match op.op {
                         Op::Dec { .. } => "-",
@@ -105,7 +106,11 @@ fn main() {
                 }
                 Op::Toggle => wpctl::volume::toggle(),
             };
-            notify::volume(volume);
+
+            let new_volume = wpctl::volume::lookup();
+            if old_volume != new_volume {
+                notify::volume(new_volume);
+            }
         }
     }
 }
