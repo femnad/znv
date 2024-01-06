@@ -403,6 +403,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "clap_complete"
+version = "4.4.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "97aeaa95557bd02f23fbb662f981670c3d20c5a26e69f7354b28f57092437fcd"
+dependencies = [
+ "clap 4.4.13",
+]
+
+[[package]]
 name = "clap_derive"
 version = "4.4.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2160,6 +2169,7 @@ version = "0.3.4"
 dependencies = [
  "atty",
  "clap 4.4.13",
+ "clap_complete",
  "notify-rust",
  "regex",
  "skim",

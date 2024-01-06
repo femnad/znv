@@ -3,7 +3,9 @@ mod wpctl;
 
 extern crate skim;
 
-use clap::{Args, Parser, Subcommand};
+use clap::{Args, Command, CommandFactory, Parser, Subcommand};
+use clap_complete::{generate, Generator, Shell};
+use std::io;
 
 #[derive(Debug, Parser)]
 #[command(name = "znv", version, about = "znv: Tiny wpctl wrapper")]
@@ -15,9 +17,17 @@ struct Cli {
 #[derive(Debug, Subcommand)]
 enum Commands {
     Default(DefaultArgs),
+    #[command(about = "Generate completions")]
+    Generate(GenerateArgs),
     #[command(about = "Show sinks and sources")]
     Status,
     Volume(VolumeArgs),
+}
+
+#[derive(Args, Debug)]
+struct GenerateArgs {
+    #[arg(help = "Shell name")]
+    shell: Shell,
 }
 
 #[derive(Args, Debug)]
@@ -64,6 +74,10 @@ enum Op {
     Toggle,
 }
 
+fn print_completions<G: Generator>(gen: G, cmd: &mut Command) {
+    generate(gen, cmd, cmd.get_name().to_string(), &mut io::stdout());
+}
+
 fn main() {
     let args = Cli::parse();
     match args.command {
@@ -72,6 +86,10 @@ fn main() {
             Node::Sink(sink) => wpctl::node::set_default("sink", sink.prefer_gui),
             Node::Source(source) => wpctl::node::set_default("source", source.prefer_gui),
         },
+        Commands::Generate(generate_args) => {
+            let mut cmd = Cli::command();
+            print_completions(generate_args.shell, &mut cmd);
+        }
         Commands::Status => {
             let status = wpctl::node::get_status();
             println!("{status}");
