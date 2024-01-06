@@ -17,12 +17,12 @@ enum Commands {
     Default(DefaultArgs),
     #[command(about = "Show sinks and sources")]
     Status,
-    Vol(VolArgs),
+    Volume(VolumeArgs),
 }
 
 #[derive(Args, Debug)]
 #[command(about = "Modify/toggle volume")]
-struct VolArgs {
+struct VolumeArgs {
     #[command(subcommand)]
     op: Op,
 }
@@ -76,7 +76,7 @@ fn main() {
             let status = wpctl::node::get_status();
             println!("{status}");
         }
-        Commands::Vol(op) => {
+        Commands::Volume(op) => {
             let volume = match op.op {
                 Op::Dec { step } | Op::Inc { step } => {
                     let sign = match op.op {
