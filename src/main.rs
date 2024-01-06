@@ -68,12 +68,12 @@ fn main() {
     let args = Cli::parse();
     match args.command {
         Commands::Default(node) => match node.node {
-            Node::Reset => wpctl::sink::reset_default(),
-            Node::Sink(sink) => wpctl::sink::set_default("sink", sink.prefer_gui),
-            Node::Source(source) => wpctl::sink::set_default("source", source.prefer_gui),
+            Node::Reset => wpctl::node::reset_default(),
+            Node::Sink(sink) => wpctl::node::set_default("sink", sink.prefer_gui),
+            Node::Source(source) => wpctl::node::set_default("source", source.prefer_gui),
         },
         Commands::Status => {
-            let status = wpctl::sink::get_status();
+            let status = wpctl::node::get_status();
             println!("{status}");
         }
         Commands::Vol(op) => {
