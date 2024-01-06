@@ -1,4 +1,4 @@
-# znv
+# nor
 
 A tiny wrapper around [wpctl](https://wiki.archlinux.org/title/WirePlumber).
 

@@ -1,5 +1,7 @@
 use ::notify_rust::{Hint, Notification, Urgency};
 
+const NOTIFICATION_SUMMARY: &str = "nor";
+
 fn get_volume_classifier(volume: f32) -> String {
     let vol = if volume == 0.0 {
         "muted"
@@ -18,6 +20,14 @@ fn get_volume_classifier(volume: f32) -> String {
 fn get_icon(volume: f32) -> String {
     let classifier = get_volume_classifier(volume);
     format!("audio-volume-{}-symbolic", classifier)
+}
+
+pub fn message(msg: &str) {
+    Notification::new()
+        .summary(NOTIFICATION_SUMMARY)
+        .body(msg)
+        .show()
+        .expect("error sending notification");
 }
 
 pub fn volume(volume: f32) {

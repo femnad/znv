@@ -1,4 +1,3 @@
-use notify_rust::Notification;
 use regex::Regex;
 use skim::prelude::{SkimItemReader, SkimOptionsBuilder};
 use skim::Skim;
@@ -9,6 +8,7 @@ use std::str::FromStr;
 use tabled::settings::Style;
 use tabled::{Table, Tabled};
 
+use crate::notify::message;
 use crate::wpctl::WPCTL_EXEC;
 
 const NODE_REGEX: &str = r"(?P<default>\*)?\s+(?P<id>[0-9]+)\. (?P<name>[^\[\]]+) \[vol: (?P<volume>[0-9.]+)\]";
@@ -189,11 +189,7 @@ fn inform(msg: &str, prefer_gui: bool) {
         return;
     }
 
-    Notification::new()
-        .summary("znv")
-        .body(msg)
-        .show()
-        .expect("error showing informational message");
+    message(msg);
 }
 
 fn set_default_node(nodes: Vec<Node>, node_type: &str, prefer_gui: bool) {

@@ -8,7 +8,7 @@ use clap_complete::{generate, Generator, Shell};
 use std::io;
 
 #[derive(Debug, Parser)]
-#[command(name = "znv", version, about = "znv: Tiny wpctl wrapper")]
+#[command(name = "nor", version, about = "nor: Tiny wpctl wrapper")]
 struct Cli {
     #[command(subcommand)]
     command: Commands,

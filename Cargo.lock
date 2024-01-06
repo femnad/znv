@@ -1146,6 +1146,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "nor"
+version = "0.4.1"
+dependencies = [
+ "atty",
+ "clap 4.4.13",
+ "clap_complete",
+ "notify-rust",
+ "regex",
+ "skim",
+ "tabled",
+]
+
+[[package]]
 name = "notify-rust"
 version = "4.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2226,19 +2239,6 @@ dependencies = [
  "serde",
  "static_assertions",
  "zvariant",
-]
-
-[[package]]
-name = "znv"
-version = "0.4.1"
-dependencies = [
- "atty",
- "clap 4.4.13",
- "clap_complete",
- "notify-rust",
- "regex",
- "skim",
- "tabled",
 ]
 
 [[package]]
