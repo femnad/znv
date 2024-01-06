@@ -160,10 +160,15 @@ fn select_with_rofi(node_names: Vec<String>, prompt: &str) -> Option<String> {
 }
 
 fn select_with_skim(node_names: Vec<String>, prompt: &str) -> Option<String> {
+    let prompt = if prompt.ends_with(": ") {
+        prompt.to_string()
+    } else {
+        format!("{prompt}: ")
+    };
     let options = SkimOptionsBuilder::default()
         .height(Some("100%"))
         .multi(false)
-        .prompt(Some(prompt))
+        .prompt(Some(prompt.as_str()))
         .build()
         .unwrap();
     let item_reader = SkimItemReader::default();
