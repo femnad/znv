@@ -67,8 +67,7 @@ impl Status {
 impl Display for Status {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         Status::maybe_print_nodes(&self.sinks, "Sinks:\n", f);
-        let prefix = if self.sinks.len() > 0 { "\n" } else { "" };
-        Status::maybe_print_nodes(&self.sources, format!("{prefix}Sources:\n").as_str(), f);
+        Status::maybe_print_nodes(&self.sources, "Sources:\n", f);
         Ok(())
     }
 }
