@@ -48,14 +48,16 @@ struct DefaultArgs {
 enum Node {
     #[command(about = "Reset defaults")]
     Reset,
+    #[command(about = "Show defaults")]
+    Show(NodeArgs),
     #[command(about = "Set default sink")]
-    Sink(SetterArgs),
+    Sink(NodeArgs),
     #[command(about = "Set default source")]
-    Source(SetterArgs),
+    Source(NodeArgs),
 }
 
 #[derive(Args, Debug)]
-struct SetterArgs {
+struct NodeArgs {
     #[arg(
         short = 'g',
         long,
@@ -82,6 +84,7 @@ fn main() {
     let args = Cli::parse();
     match args.command {
         Commands::Default(node) => match node.node {
+            Node::Show(show) => wpctl::node::show_defaults(show.prefer_gui),
             Node::Reset => wpctl::node::reset_default(),
             Node::Sink(sink) => wpctl::node::set_default("sink", sink.prefer_gui),
             Node::Source(source) => wpctl::node::set_default("source", source.prefer_gui),

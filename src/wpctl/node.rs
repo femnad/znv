@@ -11,7 +11,8 @@ use tabled::{Table, Tabled};
 use crate::notify::message;
 use crate::wpctl::WPCTL_EXEC;
 
-const NODE_REGEX: &str = r"(?P<default>\*)?\s+(?P<id>[0-9]+)\. (?P<name>[^\[\]]+) \[vol: (?P<volume>[0-9.]+)\]";
+const NODE_REGEX: &str =
+    r"(?P<default>\*)?\s+(?P<id>[0-9]+)\. (?P<name>[^\[\]]+) \[vol: (?P<volume>[0-9.]+)\]";
 
 enum NodeType {
     Sink,
@@ -268,4 +269,21 @@ pub fn set_default(node_type: &str, prefer_gui: bool) {
     };
 
     set_default_node(nodes, node_type, prefer_gui);
+}
+
+fn default_node(nodes: &Vec<Node>) -> Option<&Node> {
+    nodes.iter().find(|n| n.default)
+}
+
+fn maybe_show_default(nodes: &Vec<Node>, node_type: &str, prefer_gui: bool) {
+    if let Some(default_sink) = default_node(nodes) {
+        let msg = format!("Default {}: {}", node_type, default_sink.name);
+        inform(msg.as_str(), prefer_gui);
+    }
+}
+
+pub fn show_defaults(prefer_gui: bool) {
+    let status = get_status();
+    maybe_show_default(&status.sinks, "sink", prefer_gui);
+    maybe_show_default(&status.sources, "source", prefer_gui);
 }
