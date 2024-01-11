@@ -224,7 +224,11 @@ fn set_default_node(nodes: Vec<Node>, node_type: &str, prefer_gui: bool) {
         return;
     }
 
-    let prompt = format!("Set default {node_type} (current: {default_node_name})");
+    let mut current = String::new();
+    if !default_node_name.is_empty() {
+        current = format!(" (current: {default_node_name})");
+    };
+    let prompt = format!("Set default {node_type}{}", current.as_str());
     let maybe_node_id = if !prefer_gui && atty::is(atty::Stream::Stdout) {
         select_with_skim(node_names, prompt.as_str())
     } else {
