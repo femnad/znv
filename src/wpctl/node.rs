@@ -279,15 +279,25 @@ fn default_node(nodes: &Vec<Node>) -> Option<&Node> {
     nodes.iter().find(|n| n.default)
 }
 
-fn maybe_show_default(nodes: &Vec<Node>, node_type: &str, prefer_gui: bool) {
+fn get_default_msg(nodes: &Vec<Node>, node_type: &str) -> Option<String> {
     if let Some(default_sink) = default_node(nodes) {
-        let msg = format!("Default {}: {}", node_type, default_sink.name);
-        inform(msg.as_str(), prefer_gui);
+        return Some(format!(
+            "Default {}: {}",
+            node_type, default_sink.name
+        ));
     }
+
+    None
 }
 
 pub fn show_defaults(prefer_gui: bool) {
     let status = get_status();
-    maybe_show_default(&status.sinks, "sink", prefer_gui);
-    maybe_show_default(&status.sources, "source", prefer_gui);
+    let msgs: Vec<Option<String>> = vec![
+        get_default_msg(&status.sinks, "sink"),
+        get_default_msg(&status.sources, "source"),
+    ];
+
+    let msgs: Vec<&str> = msgs.iter().filter_map(|m| m.as_deref()).collect();
+    let joined = msgs.join("\n");
+    inform(joined.as_str(), prefer_gui);
 }
