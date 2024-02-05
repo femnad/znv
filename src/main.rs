@@ -3,6 +3,7 @@ mod wpctl;
 
 extern crate skim;
 
+use crate::wpctl::volume::{apply, Change, ChangeType};
 use clap::{Args, Command, CommandFactory, Parser, Subcommand};
 use clap_complete::{generate, Generator, Shell};
 use std::io;
@@ -97,23 +98,12 @@ fn main() {
             wpctl::node::print_status();
         }
         Commands::Volume(op) => {
-            let old_volume = wpctl::volume::lookup();
-            match op.op {
-                Op::Dec { step } | Op::Inc { step } => {
-                    let sign = match op.op {
-                        Op::Dec { .. } => "-",
-                        Op::Inc { .. } => "+",
-                        _ => unreachable!("No other Op variant should be matched here"),
-                    };
-                    wpctl::volume::modify(step, sign)
-                }
-                Op::Toggle => wpctl::volume::toggle(),
+            let change = match op.op {
+                Op::Dec { step } => Change::new(ChangeType::Dec, step),
+                Op::Inc { step } => Change::new(ChangeType::Inc, step),
+                Op::Toggle => Change::new(ChangeType::Toggle, None),
             };
-
-            let new_volume = wpctl::volume::lookup();
-            if old_volume != new_volume {
-                notify::volume(new_volume);
-            }
+            apply(change);
         }
     }
 }

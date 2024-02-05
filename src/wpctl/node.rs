@@ -281,10 +281,7 @@ fn default_node(nodes: &Vec<Node>) -> Option<&Node> {
 
 fn get_default_msg(nodes: &Vec<Node>, node_type: &str) -> Option<String> {
     if let Some(default_sink) = default_node(nodes) {
-        return Some(format!(
-            "Default {}: {}",
-            node_type, default_sink.name
-        ));
+        return Some(format!("Default {}: {}", node_type, default_sink.name));
     }
 
     None
