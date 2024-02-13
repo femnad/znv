@@ -12,7 +12,7 @@ use crate::notify::message;
 use crate::wpctl::WPCTL_EXEC;
 
 const NODE_REGEX: &str =
-    r"(?P<default>\*)?\s+(?P<id>[0-9]+)\. (?P<name>[^\[\]]+) \[vol: (?P<volume>[0-9.]+)( MUTED)?\]";
+    r"(?P<default>\*)?\s+(?P<id>[0-9]+)\. (?P<name>[^\[\]]+) \[vol: (?P<volume>[0-9.]+)(?P<muted> MUTED)?\]";
 
 enum NodeType {
     Sink,
@@ -37,6 +37,8 @@ struct Node {
     id: u32,
     #[tabled(order = 3, rename = "Default")]
     default: bool,
+    #[tabled(order = 4, rename = "Muted")]
+    muted: bool,
     #[tabled(order = 1, rename = "Name")]
     name: String,
     #[tabled(order = 2, rename = "Volume")]
@@ -87,6 +89,7 @@ fn get_status() -> Status {
                 let default = &captures.name("default").is_some();
                 let id = &captures.name("id").expect("error getting ID").as_str();
                 let id_u: u32 = id.parse().expect("error parsing ID");
+                let muted = &captures.name("muted").is_some();
                 let name = &captures.name("name").expect("error getting name").as_str();
                 let volume = &captures
                     .name("volume")
@@ -96,6 +99,7 @@ fn get_status() -> Status {
                 let node = Node {
                     default: *default,
                     id: id_u,
+                    muted: *muted,
                     name: name.trim().to_string(),
                     volume: volume_f,
                 };

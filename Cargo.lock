@@ -1138,7 +1138,7 @@ dependencies = [
 
 [[package]]
 name = "nor"
-version = "0.7.2"
+version = "0.8.0"
 dependencies = [
  "atty",
  "clap 4.4.18",
