@@ -24,6 +24,7 @@ impl Change {
 pub enum ChangeType {
     Dec,
     Inc,
+    Set { value: u32 },
     Toggle,
 }
 
@@ -45,21 +46,33 @@ fn lookup() -> f32 {
     vol_f
 }
 
-fn modify(step: Option<u32>, sign: &str) {
+fn modify(step: Option<u32>, sign: Option<&str>) {
     let mut cmd = Command::new(WPCTL_EXEC);
 
     let modify_step = step.unwrap_or(DEFAULT_MODIFY_STEP);
-    let modify_step_str = f32::max(modify_step as f32 / 100.0, MINIMUM_MODIFY_STEP).to_string();
+    let mut modify_volume = f32::max(modify_step as f32 / 100.0, MINIMUM_MODIFY_STEP).to_string();
     let max_vol = MAXIMUM_VOLUME.to_string();
+
+    if sign.is_some() {
+        modify_volume.push_str(sign.unwrap());
+    }
 
     cmd.args([
         "set-volume",
         "-l",
         max_vol.as_str(),
         DEFAULT_SINK_SPECIFIER,
-        format!("{modify_step_str}{sign}").as_str(),
+        format!("{modify_volume}").as_str(),
     ]);
     cmd.status().expect("error setting volume");
+}
+
+fn modify_rel(step: Option<u32>, sign: &str) {
+    modify(step, Some(sign));
+}
+
+fn modify_set(value: u32) {
+    modify(Some(value), None);
 }
 
 fn toggle() {
@@ -78,8 +91,9 @@ pub fn apply(change: Change) {
                 ChangeType::Inc => "+",
                 _ => unreachable!("Unexpected volume change type {:?}", dec_or_inc),
             };
-            modify(change.step, sign);
+            modify_rel(change.step, sign);
         }
+        ChangeType::Set { value } => modify_set(value),
         Toggle => toggle(),
     };
 

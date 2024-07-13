@@ -73,6 +73,8 @@ enum Op {
     Dec { step: Option<u32> },
     #[command(about = "Increase volume")]
     Inc { step: Option<u32> },
+    #[command(about = "Set volume")]
+    Set { value: u32 },
     #[command(about = "Toggle mute state")]
     Toggle,
 }
@@ -101,6 +103,7 @@ fn main() {
             let change = match op.op {
                 Op::Dec { step } => Change::new(ChangeType::Dec, step),
                 Op::Inc { step } => Change::new(ChangeType::Inc, step),
+                Op::Set { value } => Change::new(ChangeType::Set { value }, None),
                 Op::Toggle => Change::new(ChangeType::Toggle, None),
             };
             apply(change);
