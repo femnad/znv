@@ -30,7 +30,7 @@ pub fn message(msg: &str) {
         .expect("error sending notification");
 }
 
-pub fn volume(volume: f32) {
+pub fn volume(volume: f32, node_name: String) {
     let icon = get_icon(volume);
     let vol_int = (volume * 100.0) as u32;
 
@@ -39,7 +39,7 @@ pub fn volume(volume: f32) {
         .urgency(Urgency::Low)
         .hint(Hint::CustomInt("value".to_string(), vol_int as i32))
         .icon(icon.as_str())
-        .summary("Volume")
+        .summary(node_name.as_str())
         .show()
         .expect("error sending notification");
 }

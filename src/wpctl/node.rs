@@ -301,3 +301,8 @@ pub fn show_defaults(prefer_gui: bool) {
     let joined = msgs.join("\n");
     inform(joined.as_str(), prefer_gui);
 }
+
+pub fn default_sink() -> String {
+    let status = get_status();
+    default_node(&status.sinks).unwrap().name.clone()
+}

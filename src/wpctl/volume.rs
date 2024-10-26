@@ -1,6 +1,7 @@
 use crate::notify;
-use crate::wpctl::volume::ChangeType::Toggle;
 use crate::wpctl::WPCTL_EXEC;
+use crate::wpctl::node::default_sink;
+use crate::wpctl::volume::ChangeType::Toggle;
 use std::process::Command;
 
 const DEFAULT_MODIFY_STEP: u32 = 5;
@@ -8,6 +9,7 @@ const DEFAULT_SINK_SPECIFIER: &str = "@DEFAULT_AUDIO_SINK@";
 const MAXIMUM_VOLUME: f32 = 1.5;
 const MINIMUM_MODIFY_STEP: f32 = 0.01;
 const MUTED_SUFFIX: &str = "[MUTED]";
+const NOTIFICATION_NODE_MAX_LENGTH: usize = 21;
 
 pub struct Change {
     change_type: ChangeType,
@@ -99,6 +101,8 @@ pub fn apply(change: Change) {
 
     let new_volume = lookup();
     if old_volume != new_volume || new_volume == 0.0 {
-        notify::volume(new_volume);
+        let sink = default_sink();
+        let truncated = sink.chars().take(NOTIFICATION_NODE_MAX_LENGTH).collect();
+        notify::volume(new_volume, truncated);
     }
 }
