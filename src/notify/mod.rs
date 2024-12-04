@@ -32,7 +32,8 @@ pub fn message(msg: &str) {
 
 pub fn volume(volume: f32, node_name: String) {
     let icon = get_icon(volume);
-    let vol_int = (volume * 100.0) as u32;
+    let vol_scaled = volume * 100.0;
+    let vol_int = vol_scaled.round() as u32;
 
     Notification::new()
         .appname("volume")
