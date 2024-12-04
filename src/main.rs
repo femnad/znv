@@ -3,7 +3,7 @@ mod wpctl;
 
 extern crate skim;
 
-use crate::wpctl::volume::{apply, Change, ChangeType};
+use crate::wpctl::volume::{apply, VolumeOp, OpType};
 use clap::{Args, Command, CommandFactory, Parser, Subcommand};
 use clap_complete::{generate, Generator, Shell};
 use std::io;
@@ -71,10 +71,14 @@ struct NodeArgs {
 enum Op {
     #[command(about = "Decrease volume")]
     Dec { step: Option<u32> },
+    #[command(about = "Get volume")]
+    Get,
     #[command(about = "Increase volume")]
     Inc { step: Option<u32> },
     #[command(about = "Set volume")]
     Set { value: u32 },
+    #[command(about = "Display volume")]
+    Show,
     #[command(about = "Toggle mute state")]
     Toggle,
 }
@@ -101,10 +105,12 @@ fn main() {
         }
         Commands::Volume(op) => {
             let change = match op.op {
-                Op::Dec { step } => Change::new(ChangeType::Dec, step),
-                Op::Inc { step } => Change::new(ChangeType::Inc, step),
-                Op::Set { value } => Change::new(ChangeType::Set { value }, None),
-                Op::Toggle => Change::new(ChangeType::Toggle, None),
+                Op::Dec { step } => VolumeOp::new(OpType::Dec, step),
+                Op::Get => VolumeOp::new(OpType::Get, None),
+                Op::Inc { step } => VolumeOp::new(OpType::Inc, step),
+                Op::Set { value } => VolumeOp::new(OpType::Set { value }, None),
+                Op::Show => VolumeOp::new(OpType::Show, None),
+                Op::Toggle => VolumeOp::new(OpType::Toggle, None),
             };
             apply(change);
         }

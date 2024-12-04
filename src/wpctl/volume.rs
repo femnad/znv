@@ -1,7 +1,7 @@
 use crate::notify;
 use crate::wpctl::WPCTL_EXEC;
 use crate::wpctl::node::default_sink;
-use crate::wpctl::volume::ChangeType::Toggle;
+use crate::wpctl::volume::OpType::Toggle;
 use std::process::Command;
 
 const DEFAULT_MODIFY_STEP: u32 = 5;
@@ -11,22 +11,24 @@ const MINIMUM_MODIFY_STEP: f32 = 0.01;
 const MUTED_SUFFIX: &str = "[MUTED]";
 const NOTIFICATION_NODE_MAX_LENGTH: usize = 21;
 
-pub struct Change {
-    change_type: ChangeType,
+pub struct VolumeOp {
+    op_type: OpType,
     step: Option<u32>,
 }
 
-impl Change {
-    pub fn new(change_type: ChangeType, step: Option<u32>) -> Self {
-        Change { change_type, step }
+impl VolumeOp {
+    pub fn new(change_type: OpType, step: Option<u32>) -> Self {
+        VolumeOp { op_type: change_type, step }
     }
 }
 
 #[derive(Debug)]
-pub enum ChangeType {
+pub enum OpType {
     Dec,
+    Get,
     Inc,
     Set { value: u32 },
+    Show,
     Toggle,
 }
 
@@ -84,25 +86,37 @@ fn toggle() {
     cmd.status().expect("error toggling volume");
 }
 
-pub fn apply(change: Change) {
+fn notify(volume: f32) {
+    let sink = default_sink();
+    let truncated = sink.chars().take(NOTIFICATION_NODE_MAX_LENGTH).collect();
+    notify::volume(volume, truncated);
+}
+
+pub fn apply(change: VolumeOp) {
     let old_volume = lookup();
-    match change.change_type {
-        dec_or_inc @ (ChangeType::Dec | ChangeType::Inc) => {
+    match change.op_type {
+        dec_or_inc @ (OpType::Dec | OpType::Inc) => {
             let sign = match dec_or_inc {
-                ChangeType::Dec => "-",
-                ChangeType::Inc => "+",
+                OpType::Dec => "-",
+                OpType::Inc => "+",
                 _ => unreachable!("Unexpected volume change type {:?}", dec_or_inc),
             };
             modify_rel(change.step, sign);
         }
-        ChangeType::Set { value } => modify_set(value),
+        OpType::Get => {
+            println!("volume: {}", old_volume);
+            return;
+        }
+        OpType::Set { value } => modify_set(value),
+        OpType::Show => {
+            notify(old_volume);
+            return;
+        },
         Toggle => toggle(),
     };
 
     let new_volume = lookup();
     if old_volume != new_volume || new_volume == 0.0 {
-        let sink = default_sink();
-        let truncated = sink.chars().take(NOTIFICATION_NODE_MAX_LENGTH).collect();
-        notify::volume(new_volume, truncated);
+        notify(new_volume);
     }
 }
